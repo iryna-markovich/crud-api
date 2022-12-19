@@ -1,0 +1,23 @@
+{
+  "name": "crud-api",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/iryna-markovich/crud-api.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/iryna-markovich/crud-api/issues"
+  },
+  "homepage": "https://github.com/iryna-markovich/crud-api#readme",
+  "dependencies": {
+    "nodemon": "^2.0.20"
+  }
+}
