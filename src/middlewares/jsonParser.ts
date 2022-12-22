@@ -1,10 +1,6 @@
-import { IncomingMessage, ServerResponse } from 'http'
-import { SendCallback } from '../app.types'
+import { Request, Response } from '../app.types'
 
-export default (
-  req: IncomingMessage,
-  res: ServerResponse & SendCallback
-): void => {
+export default (req: Request, res: Response): void => {
   res.send = (data: unknown): void => {
     res.writeHead(200, { 'Content-Type': 'application/json' })
     res.end(JSON.stringify(data))

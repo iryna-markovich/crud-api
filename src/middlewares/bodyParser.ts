@@ -1,7 +1,6 @@
-import { ServerResponse } from 'http'
-import { IncomingRequest } from '../app.types'
+import { Request, Response } from '../app.types'
 
-export default (req: IncomingRequest, res: ServerResponse): void => {
+export default (req: Request, res: Response): void => {
   let body = ''
 
   req.on('data', (chunk: Buffer) => {

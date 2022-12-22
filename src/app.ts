@@ -1,7 +1,7 @@
-import { createServer, ServerResponse, Server } from 'http'
+import { createServer, Server } from 'http'
 import EventEmitter from 'events'
 import User from './models/users/User'
-import { Middleware, IncomingRequest } from './app.types'
+import { Middleware, Request, Response } from './app.types'
 
 const emitter = new EventEmitter()
 const users = new User()
@@ -41,7 +41,7 @@ export default class Application {
   }
 
   listen(port: number): Server {
-    const server = createServer((req: IncomingRequest, res: ServerResponse) => {
+    const server = createServer((req: Request, res: Response) => {
       this.middlewares.forEach((middleware) => middleware(req, res))
 
       req.on('end', () => {
