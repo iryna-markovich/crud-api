@@ -12,25 +12,29 @@ emitter.on('/users:GET', async (req, res) => {
   res.send(data)
 })
 
+emitter.on('/users/:id:GET', async (req, res) => {
+  console.log(req.id, '-----')
+  const data = await users.findByPk(req.id)
+
+  res.send(data)
+})
+
 emitter.on('/users:POST', async (req, res) => {
   const data = await users.create(req.body)
 
-  res.writeHead(200, { 'Content-Type': 'application/json' })
-  res.end(JSON.stringify(data))
+  res.send(data)
 })
 
 emitter.on('/users/:id:PUT', async (req, res) => {
   const data = await users.update(req.id, req.body)
 
-  res.writeHead(200, { 'Content-Type': 'application/json' })
-  res.end(JSON.stringify(data))
+  res.send(data)
 })
 
 emitter.on('/users/:id:DELETE', async (req, res) => {
   const data = await users.destroy(req.id)
 
-  res.writeHead(200, { 'Content-Type': 'application/json' })
-  res.end(JSON.stringify(data))
+  res.send(data)
 })
 
 export default class Application {
@@ -45,6 +49,7 @@ export default class Application {
       this.middlewares.forEach((middleware) => middleware(req, res))
 
       req.on('end', () => {
+        console.log(req.url)
         const emitted = emitter.emit(`${req.url}:${req.method}`, req, res)
 
         if (!emitted) res.end()
