@@ -33,9 +33,11 @@ export default class User {
   }
 
   public async update(id: string, data: UserRecord): Promise<UserRecord> {
-    const user = this.users[id]
+    const user = { ...this.users[id], ...data }
 
-    return { ...user, ...data }
+    this.users = { ...this.users, [id]: user }
+
+    return user
   }
 
   public async destroy(id: string): Promise<boolean> {
