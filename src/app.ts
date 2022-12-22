@@ -42,18 +42,10 @@ export default class Application {
 
   listen(port: number): Server {
     const server = createServer((req: IncomingRequest, res: ServerResponse) => {
-      let body = ''
-
-      req.on('data', (chunk: Buffer) => {
-        body += chunk
-      })
+      this.middlewares.forEach((middleware) => middleware(req, res))
 
       req.on('end', () => {
-        if (body) req.body = JSON.parse(body)
-
         const emitted = emitter.emit(`${req.url}:${req.method}`, req, res)
-
-        this.middlewares.forEach((middleware) => middleware(req, res))
 
         if (!emitted) res.end()
       })
