@@ -1,41 +1,22 @@
-import { createServer, Server } from 'http'
+import { createServer, Server, IncomingMessage, ServerResponse } from 'http'
 import EventEmitter from 'events'
-import User from './models/users/User'
 import { Middleware, Request, Response } from './app.types'
+import { ERRORS } from './utils/getError'
+import {
+  getUsers,
+  getUser,
+  createUser,
+  updateUser,
+  deleteUser,
+} from './controllers/users'
 
 const emitter = new EventEmitter()
-const users = new User()
 
-emitter.on('/users:GET', async (req, res) => {
-  const data = await users.findAll()
-
-  res.send(data)
-})
-
-emitter.on('/users/:id:GET', async (req, res) => {
-  console.log(req.id, '-----')
-  const data = await users.findByPk(req.id)
-
-  res.send(data)
-})
-
-emitter.on('/users:POST', async (req, res) => {
-  const data = await users.create(req.body)
-
-  res.send(data)
-})
-
-emitter.on('/users/:id:PUT', async (req, res) => {
-  const data = await users.update(req.id, req.body)
-
-  res.send(data)
-})
-
-emitter.on('/users/:id:DELETE', async (req, res) => {
-  const data = await users.destroy(req.id)
-
-  res.send(data)
-})
+emitter.on('/users:GET', getUsers)
+emitter.on('/users/:id:GET', getUser)
+emitter.on('/users:POST', createUser)
+emitter.on('/users/:id:PUT', updateUser)
+emitter.on('/users/:id:DELETE', deleteUser)
 
 export default class Application {
   private middlewares: Middleware[] = []
@@ -49,10 +30,18 @@ export default class Application {
       this.middlewares.forEach((middleware) => middleware(req, res))
 
       req.on('end', () => {
-        console.log(req.url)
-        const emitted = emitter.emit(`${req.url}:${req.method}`, req, res)
+        const url = req.url
+        const emitted = emitter.emit(`${url}:${req.method}`, req, res)
 
-        if (!emitted) res.end()
+        if (!emitted) {
+          res.send({
+            status: 404,
+            error: {
+              name: ERRORS.NOT_FOUND,
+              message: `resource '${url}' is not found`,
+            },
+          })
+        }
       })
     })
 
