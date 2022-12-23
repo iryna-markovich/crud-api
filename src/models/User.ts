@@ -1,6 +1,6 @@
 import { v4 as uuid } from 'uuid'
 
-interface UserRecord {
+export interface UserRecord {
   id: string
   username: string
   age: number
