@@ -1,7 +1,7 @@
-import { createServer, Server, IncomingMessage, ServerResponse } from 'http'
+import { createServer, Server } from 'http'
 import EventEmitter from 'events'
 import { Middleware, Request, Response } from './app.types'
-import { ERRORS } from './utils/getError'
+import { ERRORS } from './constants/errors'
 import {
   getUsers,
   getUser,
@@ -34,7 +34,7 @@ export default class Application {
         const emitted = emitter.emit(`${url}:${req.method}`, req, res)
 
         if (!emitted) {
-          res.send({
+          res.send?.({
             status: 404,
             error: {
               name: ERRORS.NOT_FOUND,

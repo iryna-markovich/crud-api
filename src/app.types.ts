@@ -1,6 +1,6 @@
 import { IncomingMessage, ServerResponse } from 'http'
 
-export type Error = {
+export type ErrorType = {
   name: string
   message: string
 }
@@ -12,12 +12,12 @@ export type Payload = {
 }
 
 export type Request = IncomingMessage & {
-  id: string
-  body: object
+  id?: string
+  body?: object
 }
 
 export type Response = ServerResponse & {
-  send: (payload: Payload) => void
+  send?: (payload: Payload) => void
 }
 
 export type Middleware = (req: Request, res: Response) => void
