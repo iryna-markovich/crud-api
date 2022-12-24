@@ -4,7 +4,9 @@
   "description": "",
   "main": "src",
   "scripts": {
-    "start": "nodemon src/index.ts",
+    "start:dev": "nodemon src/index.ts",
+    "start:prod": "npm run build && node dist/index.js",
+    "build": "npm run lint && tsc -p tsconfig.json",
     "lint": "eslint --ext .ts src",
     "test": "jest"
   },
