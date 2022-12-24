@@ -4,7 +4,7 @@ type ErrorMessages = string[]
 
 type ValidationResult = {
   valid: boolean
-  message: string
+  errors?: string
 }
 
 type Value = string | number | string[] | number[]
@@ -84,9 +84,10 @@ const validationMap: ValidationMap = {
 }
 
 export const validateId = (id: string | undefined): ValidationResult => {
+  const valid = validate(id as string)
   return {
     valid: validate(id as string),
-    message: '"id" value should be a valid uuid',
+    errors: !valid ? '"id" value should be a valid uuid' : undefined,
   }
 }
 
@@ -198,5 +199,8 @@ export const validateBody = (
     }
   })
 
-  return { valid: !errors.length, message: errors.join(', ') }
+  return {
+    valid: !errors.length,
+    errors: errors.length ? errors.join(', ') : undefined,
+  }
 }
