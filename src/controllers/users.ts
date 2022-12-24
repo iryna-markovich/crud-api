@@ -1,64 +1,53 @@
 import { Request, Response } from './../app.types'
-import User, { UserRecord } from '../models/User'
+import { UserRecord } from '../models/User'
+import { users } from '../models'
 import { ERRORS } from '../constants/errors'
 import { validationSchema } from './users.schema'
 import { validateId, validateBody } from '../utils/validate'
 
-const users = new User()
-
 export const getUsers = async (req: Request, res: Response): Promise<void> => {
   let data
+  let payload
+  let message
 
   try {
     data = await users.findAll()
+    payload = { status: 200, data }
   } catch (e) {
-    return res.send?.({
-      status: 500,
-      error: {
-        name: ERRORS.SERVER_ERROR,
-        message: (e as Error).message || 'general server error',
-      },
-    })
+    message = (e as Error).message || 'general server error'
+    payload = { status: 500, error: { name: ERRORS.SERVER_ERROR, message } }
   }
 
-  res.send?.({ status: 200, data })
+  res.send?.(payload)
 }
 
 export const getUser = async (req: Request, res: Response): Promise<void> => {
   let data
+  let payload
+  let message
 
   const id = req.id
-  const { valid, message } = validateId(id)
+  const { valid, errors } = validateId(id)
 
   if (!valid) {
-    return res.send?.({
-      status: 400,
-      error: { name: ERRORS.BAD_REQUEST, message },
-    })
+    message = errors as string
+    payload = { status: 400, error: { name: ERRORS.BAD_REQUEST, message } }
+  } else {
+    try {
+      data = await users.findByPk(id as string)
+      payload = { status: 200, data }
+    } catch (e) {
+      message = (e as Error).message || 'general server error'
+      payload = { status: 500, error: { name: ERRORS.SERVER_ERROR, message } }
+    }
+
+    if (!data) {
+      message = `record id '${id}' is not found`
+      payload = { status: 404, error: { name: ERRORS.NOT_FOUND, message } }
+    }
   }
 
-  try {
-    data = await users.findByPk(id as string)
-  } catch (e) {
-    return res.send?.({
-      status: 500,
-      error: {
-        name: ERRORS.SERVER_ERROR,
-        message: (e as Error).message || 'general server error',
-      },
-    })
-  }
-
-  if (!data) {
-    const message = `record id '${id}' is not found`
-
-    return res.send?.({
-      status: 404,
-      error: { name: ERRORS.NOT_FOUND, message },
-    })
-  }
-
-  res.send?.({ status: 200, data })
+  res.send?.(payload)
 }
 
 export const createUser = async (
@@ -66,30 +55,26 @@ export const createUser = async (
   res: Response
 ): Promise<void> => {
   let data
+  let payload
+  let message
 
   const body = req.body
-  const { valid, message } = validateBody(body as UserRecord, validationSchema)
+  const { valid, errors } = validateBody(body as UserRecord, validationSchema)
 
   if (!valid) {
-    return res.send?.({
-      status: 400,
-      error: { name: ERRORS.BAD_REQUEST, message },
-    })
+    message = errors as string
+    payload = { status: 400, error: { name: ERRORS.BAD_REQUEST, message } }
+  } else {
+    try {
+      data = await users.create(body as UserRecord)
+      payload = { status: 200, data }
+    } catch (e) {
+      message = (e as Error).message || 'general server error'
+      payload = { status: 500, error: { name: ERRORS.SERVER_ERROR, message } }
+    }
   }
 
-  try {
-    data = await users.create(body as UserRecord)
-  } catch (e) {
-    return res.send?.({
-      status: 500,
-      error: {
-        name: ERRORS.SERVER_ERROR,
-        message: (e as Error).message || 'general server error',
-      },
-    })
-  }
-
-  res.send?.({ status: 201, data })
+  res.send?.(payload)
 }
 
 export const updateUser = async (
@@ -97,52 +82,36 @@ export const updateUser = async (
   res: Response
 ): Promise<void> => {
   let data
+  let payload
+  let message
 
   const id = req.id
   const body = req.body
-  const { valid: validId, message: idMessage } = validateId(id)
-
-  if (!validId) {
-    return res.send?.({
-      status: 400,
-      error: { name: ERRORS.BAD_REQUEST, message: idMessage },
-    })
-  }
-
-  const { valid: validBody, message: bodyMessage } = validateBody(
+  const { valid: validId, errors: idErrors } = validateId(id)
+  const { valid: validBody, errors: bodyErrors } = validateBody(
     body as UserRecord,
     validationSchema
   )
 
-  if (!validBody) {
-    return res.send?.({
-      status: 400,
-      error: { name: ERRORS.BAD_REQUEST, message: bodyMessage },
-    })
+  if (!validId || !validBody) {
+    message = (idErrors || bodyErrors) as string
+    payload = { status: 400, error: { name: ERRORS.BAD_REQUEST, message } }
+  } else {
+    try {
+      data = await users.update(id as string, body as UserRecord)
+      payload = { status: 200, data }
+    } catch (e) {
+      message = (e as Error).message || 'general server error'
+      payload = { status: 500, error: { name: ERRORS.SERVER_ERROR, message } }
+    }
+
+    if (!data) {
+      message = `record id '${id}' is not found`
+      payload = { status: 404, error: { name: ERRORS.NOT_FOUND, message } }
+    }
   }
 
-  try {
-    data = await users.update(id as string, body as UserRecord)
-  } catch (e) {
-    return res.send?.({
-      status: 500,
-      error: {
-        name: ERRORS.SERVER_ERROR,
-        message: (e as Error).message || 'general server error',
-      },
-    })
-  }
-
-  if (!data) {
-    const message = `record id '${id}' is not found`
-
-    return res.send?.({
-      status: 404,
-      error: { name: ERRORS.NOT_FOUND, message },
-    })
-  }
-
-  res.send?.({ status: 200, data })
+  res.send?.(payload)
 }
 
 export const deleteUser = async (
@@ -150,37 +119,31 @@ export const deleteUser = async (
   res: Response
 ): Promise<void> => {
   let data
+  let payload
+  let message
 
   const id = req.id
-  const { valid, message } = validateId(id)
+  const { valid, errors } = validateId(id)
 
   if (!valid) {
-    return res.send?.({
-      status: 400,
-      error: { name: ERRORS.BAD_REQUEST, message },
-    })
+    message = errors as string
+    payload = { status: 400, error: { name: ERRORS.BAD_REQUEST, message } }
+  } else {
+    try {
+      data = await users.destroy(id as string)
+      payload = { status: 204, data }
+    } catch (e) {
+      message = (e as Error).message || 'general server error'
+      payload = {
+        status: 500,
+        error: { name: ERRORS.SERVER_ERROR, message },
+      }
+    }
+    if (!data) {
+      message = `record id '${id}' is not found`
+      payload = { status: 404, error: { name: ERRORS.NOT_FOUND, message } }
+    }
   }
 
-  try {
-    data = await users.destroy(id as string)
-  } catch (e) {
-    return res.send?.({
-      status: 500,
-      error: {
-        name: ERRORS.SERVER_ERROR,
-        message: (e as Error).message || 'general server error',
-      },
-    })
-  }
-
-  if (!data) {
-    const message = `record id '${id}' is not found`
-
-    return res.send?.({
-      status: 404,
-      error: { name: ERRORS.NOT_FOUND, message },
-    })
-  }
-
-  res.send?.({ status: 204, data })
+  res.send?.(payload)
 }
