@@ -10,13 +10,14 @@ import {
   deleteUser,
 } from './controllers/users'
 
+const apiPrefix = '/api'
 const emitter = new EventEmitter()
 
-emitter.on('/users:GET', getUsers)
-emitter.on('/users/:id:GET', getUser)
-emitter.on('/users:POST', createUser)
-emitter.on('/users/:id:PUT', updateUser)
-emitter.on('/users/:id:DELETE', deleteUser)
+emitter.on(`GET:${apiPrefix}/users`, getUsers)
+emitter.on(`GET:${apiPrefix}/users/:id`, getUser)
+emitter.on(`POST:${apiPrefix}/users`, createUser)
+emitter.on(`PUT:${apiPrefix}/users/:id`, updateUser)
+emitter.on(`DELETE:${apiPrefix}/users/:id`, deleteUser)
 
 export default class Application {
   private middlewares: Middleware[] = []
@@ -31,7 +32,7 @@ export default class Application {
 
       req.on('end', () => {
         const url = req.url
-        const emitted = emitter.emit(`${url}:${req.method}`, req, res)
+        const emitted = emitter.emit(`${req.method}:${url}`, req, res)
 
         if (!emitted) {
           res.send?.({
