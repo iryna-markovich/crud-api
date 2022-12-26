@@ -32,7 +32,12 @@ export default class User {
     return newUser
   }
 
-  public async update(id: string, data: UserRecord): Promise<UserRecord> {
+  public async update(
+    id: string,
+    data: UserRecord
+  ): Promise<UserRecord | undefined> {
+    if (!this.users[id]) return undefined
+
     const user = { ...this.users[id], ...data }
 
     this.users = { ...this.users, [id]: user }
@@ -40,7 +45,9 @@ export default class User {
     return user
   }
 
-  public async destroy(id: string): Promise<boolean> {
+  public async destroy(id: string): Promise<boolean | undefined> {
+    if (!this.users[id]) return undefined
+
     return delete this.users[id]
   }
 }
