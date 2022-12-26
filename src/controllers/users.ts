@@ -134,11 +134,9 @@ export const deleteUser = async (
       payload = { status: 204, data }
     } catch (e) {
       message = (e as Error).message || 'general server error'
-      payload = {
-        status: 500,
-        error: { name: ERRORS.SERVER_ERROR, message },
-      }
+      payload = { status: 500, error: { name: ERRORS.SERVER_ERROR, message } }
     }
+
     if (!data) {
       message = `record id '${id}' is not found`
       payload = { status: 404, error: { name: ERRORS.NOT_FOUND, message } }
