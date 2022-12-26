@@ -6,6 +6,7 @@
   "scripts": {
     "start:dev": "nodemon src/index.ts",
     "start:prod": "npm run build && node dist/index.js",
+    "start:multi": "npm run build && node dist/cluster.js",
     "build": "npm run lint && tsc -p tsconfig.json",
     "lint": "eslint --ext .ts src",
     "test": "jest"
