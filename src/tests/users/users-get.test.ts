@@ -22,7 +22,7 @@ describe('users GET', () => {
 
     const validId = '22078811-3bad-4bbb-8169-9af7af7ddc1d'
     const invalidId = 'mock-uuid-id'
-    const userData = mockUserData
+    const userData = { ...mockUserData }
 
     beforeAll(async () => {
       const response = await request(url).post('/api/users').send(userData)
@@ -30,7 +30,7 @@ describe('users GET', () => {
     })
 
     afterAll(async () => {
-      if (user.id) await request(url).delete(`/api/users/${user.id}`)
+      if (user?.id) await request(url).delete(`/api/users/${user.id}`)
     })
 
     it('should return one user', async () => {
