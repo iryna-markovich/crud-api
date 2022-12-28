@@ -1,82 +1,30 @@
 import { validate } from 'uuid'
-
-type ErrorMessages = string[]
-
-type ValidationResult = {
-  valid: boolean
-  errors?: string
-}
-
-type Value = string | number | string[] | number[] | undefined
-
-type ValidationMap = {
-  [index: string]: (value: Value) => boolean
-}
-
-type SchemaItemType = {
-  type: string
-  rules?: {
-    min?: number
-    max?: number
-    minLength?: number
-    maxLength?: number
-  }
-  required?: boolean
-}
-
-type ValidationSchema = {
-  [index: string]: SchemaItemType & { items?: SchemaItemType }
-}
-
-const isDefined = (value: Value): boolean => typeof value !== undefined
-const isString = (value: Value): boolean => typeof value === 'string'
-const isNumber = (value: Value): boolean => typeof value === 'number'
-const isArray = (value: Value): boolean => Array.isArray(value)
-
-const minLength = (value: Value, conditionValue: number): boolean => {
-  if (isArray(value)) {
-    const array = value as string[]
-
-    return array.every((v: string) => minLength(v, conditionValue))
-  } else {
-    const str = value as string
-
-    return str.length >= conditionValue
-  }
-}
-const maxLength = (value: Value, conditionValue: number): boolean => {
-  if (isArray(value)) {
-    const array = value as string[]
-
-    return array.every((v: string) => maxLength(v, conditionValue))
-  } else {
-    const str = value as string
-
-    return str.length <= conditionValue
-  }
-}
-const min = (value: Value, conditionValue: number): boolean => {
-  if (isArray(value)) {
-    const array = value as number[]
-
-    return array.every((v: number) => min(v, conditionValue))
-  } else {
-    const num = value as number
-
-    return num >= conditionValue
-  }
-}
-const max = (value: Value, conditionValue: number): boolean => {
-  if (isArray(value)) {
-    const array = value as number[]
-
-    return array.every((v: number) => max(v, conditionValue))
-  } else {
-    const num = value as number
-
-    return num <= conditionValue
-  }
-}
+import {
+  ValidationMap,
+  ValidationSchema,
+  ValidationResult,
+  ErrorMessages,
+} from './validate.types'
+import {
+  isString,
+  isNumber,
+  isArray,
+  isDefined,
+  checkAdditionalValues,
+  checkRequiredValues,
+  min,
+  max,
+  maxLength,
+  minLength,
+} from './helpers'
+import {
+  noAdditinalValuesMessage,
+  typeMessage,
+  minLengthMessage,
+  maxLengthMessage,
+  minMessage,
+  maxMessage,
+} from './messages'
 
 const validationMap: ValidationMap = {
   string: isString,
@@ -86,6 +34,7 @@ const validationMap: ValidationMap = {
 
 export const validateId = (id: string | undefined): ValidationResult => {
   const valid = validate(id as string)
+
   return {
     valid: validate(id as string),
     errors: !valid ? '"id" value should be a valid uuid' : undefined,
@@ -102,74 +51,46 @@ export const validateBody = (
   const dataKeys = Object.keys(data)
   const schemaKeys = Object.keys(schema)
   const schemaEntries = Object.entries(schema)
-  const requiredFields = schemaEntries.filter(([key, value]) => value.required)
+  const dataEntries = Object.entries(data)
+  const requiredValues = schemaEntries.filter(([key, value]) => value.required)
 
-  dataKeys.forEach((key) => {
-    const includes = schemaKeys.includes(key)
+  const includesAdditionalValues = checkAdditionalValues(dataKeys, schemaKeys)
 
-    if (!includes)
-      errors = [
-        ...errors,
-        `additional values are not allowed, allowed only: ${schemaKeys.join(', ')} `.trim(),
-      ]
-  })
-
-  if (errors.length)
+  if (includesAdditionalValues)
     return {
-      valid: !errors.length,
-      errors: errors.length ? errors.join(', ') : undefined,
+      valid: false,
+      errors: [noAdditinalValuesMessage(schemaKeys)].join(', '),
     }
 
-  requiredFields.forEach(([key, value]) => {
-    const includes = dataKeys.includes(key)
-
-    if (!includes) errors = [...errors, `"${key}" value is required`]
-  })
-
-  const dataEntries = Object.entries(data)
+  errors = checkRequiredValues(errors, requiredValues, dataKeys)
 
   dataEntries.forEach(([key, value]) => {
-    const type = schema[key].type
+    const type = schema[key].type as string
     const rules = schema[key].rules
     const validType = validationMap[type](value)
 
-    if (!validType) {
-      errors = [...errors, `"${key}" value must be a type of ${type}`]
-    } else {
-      if (
-        type === 'string' &&
-        rules?.minLength &&
-        !minLength(value, rules.minLength)
-      ) {
-        errors = [
-          ...errors,
-          `"${key}" value must be longer then ${rules.minLength} chars`,
-        ]
+    if (!validType) errors = typeMessage(errors, key, type, 'single')
+    else {
+      if (type === 'string') {
+        const minValue = rules?.minLength as number
+        const maxValue = rules?.maxLength as number
+
+        if (minValue && !minLength(value, minValue))
+          errors = minLengthMessage(errors, key, minValue, 'single')
+
+        if (maxValue && !maxLength(value, maxValue))
+          errors = maxLengthMessage(errors, key, maxValue, 'single')
       }
 
-      if (
-        type === 'string' &&
-        rules?.maxLength &&
-        !maxLength(value, rules.maxLength)
-      ) {
-        errors = [
-          ...errors,
-          `"${key}" value must be less then ${rules.maxLength} chars`,
-        ]
-      }
-
-      if (type === 'number' && isDefined(rules?.min)) {
+      if (type === 'number') {
         const minValue = rules?.min as number
-
-        if (!min(value, minValue))
-          errors = [...errors, `"${key}" value must be more then ${minValue}`]
-      }
-
-      if (type === 'number' && isDefined(rules?.max)) {
         const maxValue = rules?.max as number
 
-        if (!max(value, maxValue))
-          errors = [...errors, `"${key}" value must be less then ${maxValue}`]
+        if (isDefined(minValue) && !min(value, minValue))
+          errors = minMessage(errors, key, minValue, 'single')
+
+        if (isDefined(maxValue) && !max(value, maxValue))
+          errors = maxMessage(errors, key, maxValue, 'single')
       }
 
       if (type === 'array' && value.length) {
@@ -177,52 +98,28 @@ export const validateBody = (
         const rules = schema[key].items?.rules
         const validType = value.every((v: string) => validationMap[type](v))
 
-        if (!validType) {
-          errors = [
-            ...errors,
-            `items of "${key}" value must be a type of ${type}`,
-          ]
-        } else {
-          if (
-            type === 'string' &&
-            rules?.minLength &&
-            !minLength(value, rules.minLength)
-          ) {
-            errors = [
-              ...errors,
-              `items of "${key}" value must be longer then ${rules.minLength} chars`,
-            ]
+        if (!validType) errors = typeMessage(errors, key, type, 'multi')
+        else {
+          if (type === 'string') {
+            const minValue = rules?.minLength as number
+            const maxValue = rules?.maxLength as number
+
+            if (minValue && !minLength(value, minValue))
+              errors = minLengthMessage(errors, key, minValue, 'multi')
+
+            if (maxValue && !maxLength(value, maxValue))
+              errors = maxLengthMessage(errors, key, maxValue, 'multi')
           }
 
-          if (
-            type === 'string' &&
-            rules?.maxLength &&
-            !maxLength(value, rules.maxLength)
-          ) {
-            errors = [
-              ...errors,
-              `items of "${key}" value must be less then ${rules.maxLength} chars`,
-            ]
-          }
-
-          if (type === 'number' && isDefined(rules?.min)) {
+          if (type === 'number') {
             const minValue = rules?.min as number
+            const maxValue = rules?.max as number
 
-            if (!min(value, minValue))
-              errors = [
-                ...errors,
-                `items of "${key}" value must be more then ${minValue}`,
-              ]
-          }
+            if (isDefined(minValue) && !min(value, minValue))
+              errors = minMessage(errors, key, minValue, 'multi')
 
-          if (type === 'number' && isDefined(rules?.max)) {
-            const maxValue = rules?.min as number
-
-            if (!max(value, maxValue))
-              errors = [
-                ...errors,
-                `items of "${key}" value must be less then ${maxValue}`,
-              ]
+            if (isDefined(maxValue) && !max(value, maxValue))
+              errors = maxMessage(errors, key, maxValue, 'multi')
           }
         }
       }

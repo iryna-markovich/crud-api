@@ -9,7 +9,7 @@
     "start:multi": "npm run build && node dist/cluster.js",
     "build": "npm run lint && tsc -p tsconfig.json",
     "lint": "eslint --ext .ts src",
-    "test": "jest"
+    "test": "jest --runInBand"
   },
   "repository": {
     "type": "git",
