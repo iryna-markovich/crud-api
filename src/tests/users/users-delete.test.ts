@@ -19,8 +19,8 @@ describe('users DELETE', () => {
     user = response.body
   })
 
-  afterAll(async () => {
-    if (user?.id) await request(url).delete(`/api/users/${user.id}`)
+  afterEach(async () => {
+    if(user?.id) await request(url).delete(`/api/users/${user.id}`)
   })
 
   it('should delete user', async () => {

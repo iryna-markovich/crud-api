@@ -13,19 +13,19 @@ describe('users POST', () => {
   const userData = mockUserData
 
   afterAll(async () => {
-    if (user?.id) await request(url).delete(`/api/users/${user.id}`)
+    if(user?.id) await request(url).delete(`/api/users/${user.id}`)
   })
 
-  // it('should create user', async () => {
-  //   const response = await request(url).post('/api/users').send(userData)
-  //   user = response.body
+  it('should create user', async () => {
+    const response = await request(url).post('/api/users').send(userData)
+    user = response.body
 
-  //   expect(response.status).toEqual(200)
-  //   expect(response.body.id).toBeDefined()
-  //   expect(response.body.username).toEqual(userData.username)
-  //   expect(response.body.age).toEqual(userData.age)
-  //   expect(response.body.hobbies).toEqual(userData.hobbies)
-  // })
+    expect(response.status).toEqual(200)
+    expect(response.body.id).toBeDefined()
+    expect(response.body.username).toEqual(userData.username)
+    expect(response.body.age).toEqual(userData.age)
+    expect(response.body.hobbies).toEqual(userData.hobbies)
+  })
 
   it.each`
     username          | age          | hobbies        | message
